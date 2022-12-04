@@ -59,7 +59,9 @@ public class FragmentUser extends Fragment {
 
         btnChangePassword.setOnClickListener(view1 -> {
             String newPass = etNewPass.getText().toString();
-            changePasswordRequest(newPass);
+            if(!newPass.equals("")){
+                changePasswordRequest(newPass);
+            }
         });
 
         return view;
