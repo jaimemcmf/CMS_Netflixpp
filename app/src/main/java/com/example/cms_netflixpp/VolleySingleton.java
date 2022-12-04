@@ -13,16 +13,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class VolleySingleton {
-    private static VolleySingleton mInstance;
+    private VolleySingleton mInstance;
     private RequestQueue mRequestQueue;
-    private ImageLoader mImageLoader;
-    private static Context mCtx;
+    private final Context mCtx;
 
     public VolleySingleton(Context context) {
         mCtx = context;
         mRequestQueue = getRequestQueue();
 
-        mImageLoader = new ImageLoader(mRequestQueue,
+        new ImageLoader(mRequestQueue,
                 new ImageLoader.ImageCache() {
                     private final Map<String, Bitmap> cache = new Map<String, Bitmap>() {
                         @Override
@@ -104,18 +103,13 @@ public class VolleySingleton {
                 });
     }
 
-    public static synchronized VolleySingleton getInstance(Context context) {
+    public synchronized VolleySingleton getInstance(Context context) {
         if (mInstance == null) {
             mInstance = new VolleySingleton(context);
         }
         return mInstance;
     }
 
-    /**
-     * Get current request queue.
-     *
-     * @return RequestQueue
-     */
     public RequestQueue getRequestQueue() {
         if (mRequestQueue == null) {
             mRequestQueue = Volley.newRequestQueue(mCtx.getApplicationContext());

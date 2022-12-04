@@ -1,6 +1,7 @@
 package com.example.cms_netflixpp;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
@@ -19,10 +20,10 @@ import com.squareup.picasso.Picasso;
 import android.app.AlertDialog;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 public class MovieAdapter extends BaseAdapter implements ListAdapter {
+    Activity activity;
     String deleteUrl = "http://34.175.83.209:8080/delete/";
     Context context;
     Context c;
@@ -30,14 +31,16 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
     String user;
     String pass;
     public Intent intent;
+    View newView;
 
-    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass) {
+    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass, Activity activity) {
         super();
         this.c = c;
         this.context = context;
         this.arrayList = list;
         this.user = user;
         this.pass = pass;
+        this.activity = activity;
     }
 
     @SuppressLint("InflateParams")
@@ -48,15 +51,18 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
             LayoutInflater layoutInflater = LayoutInflater.from(context);
             convertView = layoutInflater.inflate(R.layout.movie_row, null);
             convertView.setOnClickListener(v -> {
-                AlertDialog.Builder alert = new AlertDialog.Builder(c);
-                alert.setTitle("Delete Movie");
-                alert.setMessage("Are you sure you want to delete this movie?");
-                alert.setPositiveButton("Yes", (dialog, which) -> {
-                    deleteRequest(this.user, this.pass, Integer.toString(movie.getId()));
-                    dialog.dismiss();
-                });
-                alert.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-                alert.show();
+                if(movie.getId() != -1){
+                    newView = v;
+                    AlertDialog.Builder alert = new AlertDialog.Builder(c, R.style.DeleteDialog);
+                    alert.setTitle("Delete Movie");
+                    alert.setMessage("Are you sure you want to delete this movie?");
+                    alert.setPositiveButton("Yes", (dialog, which) -> {
+                        deleteRequest(this.user, this.pass, Integer.toString(movie.getId()));
+                        dialog.dismiss();
+                    });
+                    alert.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
+                    alert.show();
+                }
             });
             TextView tittle = convertView.findViewById(R.id.movie_title);
             ImageView imageView = convertView.findViewById(R.id.thumbnail);
@@ -77,10 +83,13 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData, response -> {
-            System.out.println("deleted");
-        }, error -> System.out.println(error.toString()));
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData, response -> System.out.println("deleted"), error -> {
+            intent = new Intent(context, VideosActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra("user", user);
+            intent.putExtra("pass", password);
+            newView.getContext().startActivity(intent);
+        });
         requestQueue.add(jsonObjectRequest);
     }
 

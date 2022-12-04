@@ -22,9 +22,7 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     private final Response.ErrorListener mErrorListener;
     private Map<String, String> mHeaders;
 
-    public VolleyMultipartRequest(int method, String url,
-                                  Response.Listener<NetworkResponse> listener,
-                                  Response.ErrorListener errorListener) {
+    public VolleyMultipartRequest(int method, String url, Response.Listener<NetworkResponse> listener, Response.ErrorListener errorListener) {
         super(method, url, errorListener);
         this.mListener = listener;
         this.mErrorListener = errorListener;
@@ -46,19 +44,16 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         DataOutputStream dos = new DataOutputStream(bos);
 
         try {
-            // populate text payload
             Map<String, String> params = getParams();
             if (params != null && params.size() > 0) {
                 textParse(dos, params, getParamsEncoding());
             }
 
-            // populate data byte payload
             Map<String, DataPart> data = getByteData();
             if (data != null && data.size() > 0) {
                 dataParse(dos, data);
             }
 
-            // close multipart form data after text and file data
             dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
             return bos.toByteArray();
