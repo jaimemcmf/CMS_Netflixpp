@@ -57,7 +57,7 @@
         android:layout_width="282dp"
         android:layout_height="50dp"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="200dp"
+        android:layout_marginBottom="100dp"
         android:backgroundTint="@color/black"
         android:text="@string/change_password"
         android:textColor="@color/white" />
@@ -67,7 +67,7 @@
         android:layout_width="282dp"
         android:layout_height="50dp"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="50dp"
+        android:layout_marginBottom="30dp"
         android:backgroundTint="@color/netflix_red"
         android:text="@string/delete_account"
         android:textColor="@color/white" />

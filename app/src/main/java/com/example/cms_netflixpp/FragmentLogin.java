@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -22,6 +24,7 @@ public class FragmentLogin extends Fragment {
     Button btnLogin, btnRegister;
     EditText etUserName, etPassword;
     CallbackFragmento callbackFragment;
+    TextView errorTextView;
 
     @Nullable
     @Override
@@ -32,6 +35,7 @@ public class FragmentLogin extends Fragment {
         etPassword = view.findViewById(R.id.etPassword);
         btnLogin = view.findViewById(R.id.btnLogin);
         btnRegister = view.findViewById(R.id.btnRegister);
+        errorTextView = view.findViewById(R.id.loginTxtView);
         btnLogin.setOnClickListener(v -> loginRequest(etUserName.getText().toString(), etPassword.getText().toString()));
 
         btnRegister.setOnClickListener(v -> {
@@ -62,6 +66,7 @@ public class FragmentLogin extends Fragment {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, loginUrl, postData, response -> {
             try {
                 if (response.getString("status").equals("Success")) {
+                    errorTextView.setText("");
                     Intent intent = new Intent(getActivity(), VideosActivity.class);
                     intent.putExtra("user", user);
                     intent.putExtra("pass", password);
@@ -69,6 +74,7 @@ public class FragmentLogin extends Fragment {
                     System.out.println("Granted");
                 } else {
                     System.out.println("Invalid login");
+                    errorTextView.setText(response.getString("error"));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

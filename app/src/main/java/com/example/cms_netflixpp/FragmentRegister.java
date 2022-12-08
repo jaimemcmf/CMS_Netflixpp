@@ -80,12 +80,14 @@ public class FragmentRegister extends Fragment {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, signupUrl, postData, response -> {
             try {
                 if (response.getString("status").equals("Sucesso")) {
+                    errorTextView.setText("");
                     Intent intent = new Intent(getActivity(), VideosActivity.class);
                     intent.putExtra("user", user);
                     intent.putExtra("pass", password);
                     startActivity(intent);
                 } else {
                     System.out.println("fail");
+                    errorTextView.setText(response.getString("error"));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
