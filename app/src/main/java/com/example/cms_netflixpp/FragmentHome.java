@@ -48,7 +48,7 @@ public class FragmentHome extends Fragment {
                 }
                 if(arrayList.isEmpty()) arrayList.add(new MovieModel("No movies found", -1, null));
                 assert getArguments() != null;
-                MovieAdapter movieAdapter = new MovieAdapter(this.getContext(), requireActivity().getApplicationContext(), arrayList, getArguments().getString("user"), getArguments().getString("pass"), getActivity());
+                MovieAdapter movieAdapter = new MovieAdapter(this.getContext(), requireActivity().getApplicationContext(), arrayList, getArguments().getString("user"), getArguments().getString("pass"), FragmentHome.this);
                 list.setAdapter(movieAdapter);
             } catch (JSONException e) {
                 e.printStackTrace();

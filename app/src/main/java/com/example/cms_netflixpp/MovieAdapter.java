@@ -1,7 +1,6 @@
 package com.example.cms_netflixpp;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
@@ -23,7 +22,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 public class MovieAdapter extends BaseAdapter implements ListAdapter {
-    Activity activity;
+    FragmentHome fragmentHome;
     String deleteUrl = "http://34.175.83.209:8080/delete/";
     Context context;
     Context c;
@@ -33,14 +32,14 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
     public Intent intent;
     View newView;
 
-    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass, Activity activity) {
+    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass, FragmentHome fragmentHome) {
         super();
         this.c = c;
         this.context = context;
         this.arrayList = list;
         this.user = user;
         this.pass = pass;
-        this.activity = activity;
+        this.fragmentHome = fragmentHome;
     }
 
     @SuppressLint("InflateParams")
@@ -83,13 +82,9 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData, response -> System.out.println("deleted"), error -> {
-            intent = new Intent(context, VideosActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra("user", user);
-            intent.putExtra("pass", password);
-            newView.getContext().startActivity(intent);
-        });
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData,
+                response -> System.out.println("deleted"),
+                error -> fragmentHome.movieListRequest());
         requestQueue.add(jsonObjectRequest);
     }
 
