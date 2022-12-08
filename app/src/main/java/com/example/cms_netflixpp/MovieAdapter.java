@@ -19,10 +19,10 @@ import com.squareup.picasso.Picasso;
 import android.app.AlertDialog;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 public class MovieAdapter extends BaseAdapter implements ListAdapter {
+    FragmentHome fragmentHome;
     String deleteUrl = "http://34.175.83.209:8080/delete/";
     Context context;
     Context c;
@@ -30,14 +30,16 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
     String user;
     String pass;
     public Intent intent;
+    View newView;
 
-    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass) {
+    public MovieAdapter(Context c, Context context, ArrayList<MovieModel> list, String user, String pass, FragmentHome fragmentHome) {
         super();
         this.c = c;
         this.context = context;
         this.arrayList = list;
         this.user = user;
         this.pass = pass;
+        this.fragmentHome = fragmentHome;
     }
 
     @SuppressLint("InflateParams")
@@ -48,15 +50,18 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
             LayoutInflater layoutInflater = LayoutInflater.from(context);
             convertView = layoutInflater.inflate(R.layout.movie_row, null);
             convertView.setOnClickListener(v -> {
-                AlertDialog.Builder alert = new AlertDialog.Builder(c);
-                alert.setTitle("Delete Movie");
-                alert.setMessage("Are you sure you want to delete this movie?");
-                alert.setPositiveButton("Yes", (dialog, which) -> {
-                    deleteRequest(this.user, this.pass, Integer.toString(movie.getId()));
-                    dialog.dismiss();
-                });
-                alert.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-                alert.show();
+                if(movie.getId() != -1){
+                    newView = v;
+                    AlertDialog.Builder alert = new AlertDialog.Builder(c, R.style.DeleteDialog);
+                    alert.setTitle("Delete Movie");
+                    alert.setMessage("Are you sure you want to delete this movie?");
+                    alert.setPositiveButton("Yes", (dialog, which) -> {
+                        deleteRequest(this.user, this.pass, Integer.toString(movie.getId()));
+                        dialog.dismiss();
+                    });
+                    alert.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
+                    alert.show();
+                }
             });
             TextView tittle = convertView.findViewById(R.id.movie_title);
             ImageView imageView = convertView.findViewById(R.id.thumbnail);
@@ -77,10 +82,9 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData, response -> {
-            System.out.println("deleted");
-        }, error -> System.out.println(error.toString()));
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData,
+                response -> System.out.println("deleted"),
+                error -> fragmentHome.movieListRequest());
         requestQueue.add(jsonObjectRequest);
     }
 

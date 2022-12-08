@@ -4,22 +4,17 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-
 import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.cms_netflixpp.MainActivity;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,7 +41,7 @@ public class FragmentUser extends Fragment {
         infoRequest();
 
         btnDeleteAccount.setOnClickListener(view1 -> {
-            AlertDialog.Builder alert = new AlertDialog.Builder(this.getContext());
+            AlertDialog.Builder alert = new AlertDialog.Builder(this.getContext(), R.style.DeleteDialog);
             alert.setTitle("Delete");
             alert.setMessage("Are you sure you want to delete your account?");
             alert.setPositiveButton("Yes", (dialog, which) -> {
@@ -63,7 +58,6 @@ public class FragmentUser extends Fragment {
                 changePasswordRequest(newPass);
             }
         });
-
         return view;
     }
 
