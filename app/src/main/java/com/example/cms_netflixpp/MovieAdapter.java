@@ -17,6 +17,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
 import android.app.AlertDialog;
+import android.widget.Toast;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -84,7 +86,10 @@ public class MovieAdapter extends BaseAdapter implements ListAdapter {
         }
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, deleteUrl, postData,
                 response -> System.out.println("deleted"),
-                error -> fragmentHome.movieListRequest());
+                error -> {
+                    fragmentHome.movieListRequest();
+                    Toast.makeText(context, "The movie was successfully deleted.", Toast.LENGTH_SHORT).show();
+                });
         requestQueue.add(jsonObjectRequest);
     }
 

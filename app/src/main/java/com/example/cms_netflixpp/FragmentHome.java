@@ -46,14 +46,22 @@ public class FragmentHome extends Fragment {
                     JSONObject jo = response.getJSONArray("movies").getJSONObject(i);
                     arrayList.add(new MovieModel(jo.getString("name"), jo.getInt("id"), "http://34.175.83.209:8080/download/thumbnail/" + jo.getInt("id")));
                 }
-                if(arrayList.isEmpty()) arrayList.add(new MovieModel("No movies found", -1, null));
+                if(arrayList.isEmpty()){
+                    arrayList.add(new MovieModel("No movies found", -1, null));
+                }
                 assert getArguments() != null;
                 MovieAdapter movieAdapter = new MovieAdapter(this.getContext(), requireActivity().getApplicationContext(), arrayList, getArguments().getString("user"), getArguments().getString("pass"), FragmentHome.this);
                 list.setAdapter(movieAdapter);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }, error -> System.out.println(error.toString()));
+        }, error -> {
+            final ListView list = view.findViewById(R.id.list);
+            arrayList = new ArrayList<>();
+            arrayList.add(new MovieModel("No movies found", -1, null));
+            MovieAdapter movieAdapter = new MovieAdapter(this.getContext(), requireActivity().getApplicationContext(), arrayList, getArguments().getString("user"), getArguments().getString("pass"), FragmentHome.this);
+            list.setAdapter(movieAdapter);
+        });
         requestQueue.add(jsonObjectRequest);
     }
 

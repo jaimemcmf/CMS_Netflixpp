@@ -4,7 +4,6 @@ import static android.app.Activity.RESULT_OK;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,23 +16,17 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import com.android.volley.Request;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+
 
 public class FragmentUpload extends Fragment {
     final static String uploadURL = "http://34.175.83.209:8080/upload/movie";
@@ -46,17 +39,11 @@ public class FragmentUpload extends Fragment {
     Intent myFileIntent;
     Intent myThumbnailIntent;
     EditText txt_title;
-
     String filePathv, filePatht;
-    Uri thumburi, videouri;
-    Context thumbcontext, videocontext;
-    byte[] video;
-    byte[] thumb = null;
-
+    public static String thumb = null;
     View view;
 
     private static final int PICK_FROM_GALLERY = 1;
-    //@Override
     @SuppressLint("MissingInflatedId")
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_upload, container, false);
@@ -70,18 +57,46 @@ public class FragmentUpload extends Fragment {
         btn_videoPicker.setOnClickListener(view -> {
             myFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
             myFileIntent.setType("video/*");
-            startActivityForResult(myFileIntent, 10);
+            try {
+                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PICK_FROM_GALLERY);
+                } else {
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+                    myFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    myFileIntent.setType("video/*");
+                    startActivityForResult(galleryIntent, 10);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
         btn_thumbnailPicker.setOnClickListener(view -> {
             myThumbnailIntent = new Intent(Intent.ACTION_GET_CONTENT);
             myThumbnailIntent.setType("image/*");
-            startActivityForResult(myThumbnailIntent, 20);
+            try {
+                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PICK_FROM_GALLERY);
+                } else {
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    myThumbnailIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    myThumbnailIntent.setType("image/*");
+                    startActivityForResult(galleryIntent, 20);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
         btn_send.setOnClickListener(view -> {
             String title = txt_title.getText().toString();
-            updateRequest(title);
+            assert getArguments() != null;
+            if(!title.equals("")){
+                UploadThread uploadThread = new UploadThread(getArguments().getString("user"), getArguments().getString("pass"), title, filePathv, requireActivity().getApplicationContext());
+                uploadThread.start();
+            }else{
+                Toast.makeText(getContext(), "Video title cannot be empty!", Toast.LENGTH_SHORT).show();
+            }
         });
         return view;
     }
@@ -96,7 +111,7 @@ public class FragmentUpload extends Fragment {
                     Context context = requireContext().getApplicationContext();
                     String path = uri.getPath();
                     txt_pathShow.setText(path);
-                    /*video = */videoSend(context, uri);
+                    videoSend(context, uri);
                 }
                 break;
 
@@ -106,7 +121,7 @@ public class FragmentUpload extends Fragment {
                     Context context = requireContext().getApplicationContext();
                     String path = uri.getPath();
                     txt_thumbnail_path.setText(path);
-                    thumb = thumbnailSend(context, uri);
+                    thumb = thumbnailSend(context);
                     System.out.println(txt_thumbnail_path.getText());
                 }
                 break;
@@ -116,38 +131,6 @@ public class FragmentUpload extends Fragment {
         }
     }
 
-    protected void updateRequest(String title) {
-        VolleyMultipartRequest multipartRequest = new VolleyMultipartRequest(Request.Method.POST, uploadURL, response -> {
-        }, Throwable::printStackTrace) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                assert getArguments() != null;
-                params.put("user", getArguments().getString("user"));
-                params.put("pass", getArguments().getString("pass"));
-                params.put("fileName", title);
-                return params;
-            }
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> params = new HashMap<>();
-                try {
-                    params.put("upload", new DataPart("ola.mp4", Files.readAllBytes(Paths.get(filePathv)), "multipart/form-data"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if (thumb != null) {
-                    params.put("thumbnail", new DataPart("file_cover.png", thumb, "image/png"));
-                }
-                return params;
-            }
-        };
-        VolleySingleton volleySingleton = new VolleySingleton(requireActivity().getApplicationContext());
-        volleySingleton.addToRequestQueue(multipartRequest);
-    }
-
-    @Nullable
     public void videoSend(@NonNull Context context, @NonNull Uri uri) {
         final ContentResolver contentResolver = context.getContentResolver();
         if (contentResolver == null)
@@ -167,45 +150,43 @@ public class FragmentUpload extends Fragment {
                 outputStream.write(buf, 0, len);
             outputStream.close();
             inputStream.close();
-            return;
         } catch (IOException ignore) {
         }
     }
 
     @Nullable
-    public byte[] thumbnailSend(@NonNull Context context, @NonNull Uri uri) {
+    public String thumbnailSend(@NonNull Context context) {
         final ContentResolver contentResolver = context.getContentResolver();
         if (contentResolver == null)
             return null;
-        filePatht = context.getApplicationInfo().dataDir + File.separator + "thumbnail.png";
-        File file = new File(filePatht);
-        try {
-            InputStream inputStream = contentResolver.openInputStream(uri);
-            if (inputStream == null)
-                return null;
-            OutputStream outputStream = new FileOutputStream(file);
-            byte[] buf = new byte[1048576];
-            int len;
-            while ((len = inputStream.read(buf)) > 0)
-                outputStream.write(buf, 0, len);
-            outputStream.close();
-            inputStream.close();
-            return buf;
-        } catch (IOException ignore) {
-            return null;
-        }
+        return filePatht = context.getApplicationInfo().dataDir + File.separator + "thumbnail.png";
     }
 
-    private ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    startActivityForResult(myFileIntent, 10);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 10:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+                    myFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    myFileIntent.setType("video/");
+                    startActivityForResult(galleryIntent, 10);
                 } else {
-                    // Explain to the user that the feature is unavailable because the
-                    // feature requires a permission that the user has denied. At the
-                    // same time, respect the user's decision. Don't link to system
-                    // settings in an effort to convince the user to change their
-                    // decision.
+                    Toast.makeText(getContext(), "Unable to access gallery.", Toast.LENGTH_SHORT).show();
                 }
-            });
+                break;
+
+            case 20:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    myThumbnailIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    myThumbnailIntent.setType("image/");
+                    startActivityForResult(galleryIntent, 20);
+                } else {
+                    Toast.makeText(getContext(), "Unable to access gallery.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
 }
