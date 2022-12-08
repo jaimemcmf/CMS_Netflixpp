@@ -1,6 +1,6 @@
 package com.example.cms_netflixpp;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 import static org.junit.Assert.*;
 

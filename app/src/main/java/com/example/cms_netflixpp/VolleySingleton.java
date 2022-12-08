@@ -111,11 +111,6 @@ public class VolleySingleton {
         return mInstance;
     }
 
-    /**
-     * Get current request queue.
-     *
-     * @return RequestQueue
-     */
     public RequestQueue getRequestQueue() {
         if (mRequestQueue == null) {
             mRequestQueue = Volley.newRequestQueue(mCtx.getApplicationContext());

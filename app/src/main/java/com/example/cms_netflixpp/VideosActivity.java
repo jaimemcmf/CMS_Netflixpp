@@ -41,7 +41,7 @@ public class VideosActivity extends AppCompatActivity implements NavigationBarVi
                 return true;
 
             case R.id.footer_upload:
-                fragmentUser.setArguments(bundle);
+                fragmentUpload.setArguments(bundle);
                 getSupportFragmentManager().beginTransaction().replace(R.id.flFragment, fragmentUpload).commit();
                 return true;
 

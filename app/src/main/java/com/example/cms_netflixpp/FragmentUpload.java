@@ -1,10 +1,14 @@
 package com.example.cms_netflixpp;
 
 import static android.app.Activity.RESULT_OK;
+
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,8 +17,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import com.android.volley.Request;
 import java.io.File;
@@ -22,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,11 +47,15 @@ public class FragmentUpload extends Fragment {
     Intent myThumbnailIntent;
     EditText txt_title;
 
+    String filePathv, filePatht;
+    Uri thumburi, videouri;
+    Context thumbcontext, videocontext;
     byte[] video;
     byte[] thumb = null;
 
     View view;
 
+    private static final int PICK_FROM_GALLERY = 1;
     //@Override
     @SuppressLint("MissingInflatedId")
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,7 +96,7 @@ public class FragmentUpload extends Fragment {
                     Context context = requireContext().getApplicationContext();
                     String path = uri.getPath();
                     txt_pathShow.setText(path);
-                    video = videoSend(context, uri);
+                    /*video = */videoSend(context, uri);
                 }
                 break;
 
@@ -108,8 +122,9 @@ public class FragmentUpload extends Fragment {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("user", "a");
-                params.put("pass", "a");
+                assert getArguments() != null;
+                params.put("user", getArguments().getString("user"));
+                params.put("pass", getArguments().getString("pass"));
                 params.put("fileName", title);
                 return params;
             }
@@ -117,50 +132,53 @@ public class FragmentUpload extends Fragment {
             @Override
             protected Map<String, DataPart> getByteData() {
                 Map<String, DataPart> params = new HashMap<>();
-                params.put("upload", new DataPart("ola.mp4", video, "video/mp4"));
+                try {
+                    params.put("upload", new DataPart("ola.mp4", Files.readAllBytes(Paths.get(filePathv)), "multipart/form-data"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 if (thumb != null) {
                     params.put("thumbnail", new DataPart("file_cover.png", thumb, "image/png"));
                 }
                 return params;
             }
         };
-        com.example.cms_netflixpp.VolleySingleton volleySingleton = new com.example.cms_netflixpp.VolleySingleton(requireActivity().getApplicationContext());
+        VolleySingleton volleySingleton = new VolleySingleton(requireActivity().getApplicationContext());
         volleySingleton.addToRequestQueue(multipartRequest);
-        thumb = null;
     }
 
     @Nullable
-    public static byte[] videoSend(@NonNull Context context, @NonNull Uri uri) {
+    public void videoSend(@NonNull Context context, @NonNull Uri uri) {
         final ContentResolver contentResolver = context.getContentResolver();
         if (contentResolver == null)
-            return null;
+            return;
 
-        String filePath = context.getApplicationInfo().dataDir + File.separator + "video.mp4";
-        File file = new File(filePath);
+        filePathv = context.getApplicationInfo().dataDir + File.separator + "video.mp4";
+        System.out.println(filePathv);
+        File file = new File(filePathv);
         try {
             InputStream inputStream = contentResolver.openInputStream(uri);
             if (inputStream == null)
-                return null;
+                return;
             OutputStream outputStream = new FileOutputStream(file);
-            byte[] buf = new byte[104857600];
+            byte[] buf = new byte[20971520];
             int len;
             while ((len = inputStream.read(buf)) > 0)
                 outputStream.write(buf, 0, len);
             outputStream.close();
             inputStream.close();
-            return buf;
+            return;
         } catch (IOException ignore) {
-            return null;
         }
     }
 
     @Nullable
-    public static byte[] thumbnailSend(@NonNull Context context, @NonNull Uri uri) {
+    public byte[] thumbnailSend(@NonNull Context context, @NonNull Uri uri) {
         final ContentResolver contentResolver = context.getContentResolver();
         if (contentResolver == null)
             return null;
-        String filePath = context.getApplicationInfo().dataDir + File.separator + "thumbnail.png";
-        File file = new File(filePath);
+        filePatht = context.getApplicationInfo().dataDir + File.separator + "thumbnail.png";
+        File file = new File(filePatht);
         try {
             InputStream inputStream = contentResolver.openInputStream(uri);
             if (inputStream == null)
@@ -177,4 +195,17 @@ public class FragmentUpload extends Fragment {
             return null;
         }
     }
+
+    private ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startActivityForResult(myFileIntent, 10);
+                } else {
+                    // Explain to the user that the feature is unavailable because the
+                    // feature requires a permission that the user has denied. At the
+                    // same time, respect the user's decision. Don't link to system
+                    // settings in an effort to convince the user to change their
+                    // decision.
+                }
+            });
 }
