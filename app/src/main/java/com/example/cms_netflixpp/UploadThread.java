@@ -29,7 +29,6 @@ public class UploadThread extends Thread{
     }
 
     public void run(){
-        Toast.makeText(context, "Upload Started.", Toast.LENGTH_SHORT).show();
         VolleyMultipartRequest multipartRequest = new VolleyMultipartRequest(Request.Method.POST, uploadURL, response -> {
             Toast.makeText(context, "Upload Completed", Toast.LENGTH_SHORT).show();
             thumb = null;
